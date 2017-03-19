@@ -24,43 +24,55 @@
 package com.github.jtmsp.merkletree.byteable;
 
 import java.io.UnsupportedEncodingException;
+import java.util.AbstractMap.SimpleEntry;
 
 /**
- * A Byteable that holds a String
+ * A Byteable that holds a name/value pair
  *
  * @author wolfposd
  */
-public class ByteableString implements IByteable {
+public class ByteablePair implements IByteable {
 
-    public String string;
+    private final byte[] bytes;
+    public SimpleEntry<String, String> pair;
 
-    public ByteableString(String s) {
-        string = s;
+    public ByteablePair(String s) {
+        this.bytes = s.getBytes();
+        this.pair = getPair(s);
     }
 
-    public ByteableString(byte[] bytes) {
+    public ByteablePair(byte[] bytes) {
+        this.bytes = bytes;
+        String s = null;
         try {
-            string = new String(bytes, "UTF-8");
+            s = new String(bytes, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+        this.pair = getPair(s);
     }
 
-    @Override
-    public byte[] toByteArray() {
-        return string.getBytes();
+    private SimpleEntry<String, String> getPair(String s) {
+        String[] parts = s.split("=");
+        if (parts.length == 2) {
+            return new SimpleEntry<>(parts[0], parts[1]);
+        } else {
+            return new SimpleEntry<>(s, s);
+        }
     }
 
-    @Override
-    public String toPrettyString() {
-        return "" + string;
+    @Override public byte[] toByteArray() {
+        return bytes;
     }
 
-    @Override
-    public int compareTo(IByteable other) {
-        if (other instanceof ByteableString)
-            return string.compareTo(((ByteableString) other).string);
+    @Override public String toPrettyString() {
+        return pair.getKey() + '=' + pair.getValue();
+    }
+
+    @Override public int compareTo(IByteable other) {
+        if (other instanceof ByteablePair) {
+            return pair.getKey().compareTo(((ByteablePair) other).pair.getKey());
+        }
         return -1;
     }
-
 }

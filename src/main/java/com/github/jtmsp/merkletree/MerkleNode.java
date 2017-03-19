@@ -284,7 +284,7 @@ public class MerkleNode<K extends IByteable> {
 
     public String toPrettyString() {
         if (this.height == 0)
-            return "" + new BigInteger(key.toByteArray()).intValue();
+            return "" + key.toPrettyString();
         else {
             return "(" + this.leftChildNode.toPrettyString() + " " + this.rightChildNode.toPrettyString() + ")";
         }

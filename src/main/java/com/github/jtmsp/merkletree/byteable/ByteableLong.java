@@ -23,6 +23,7 @@
  */
 package com.github.jtmsp.merkletree.byteable;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -37,9 +38,19 @@ public class ByteableLong implements IByteable {
         this.bytes = calcByteArray(value);
     }
 
+    public ByteableLong(byte[] bytes) {
+        this.value = new BigInteger(1, bytes).longValueExact();
+        this.bytes = bytes;
+    }
+
     @Override
     public byte[] toByteArray() {
         return bytes;
+    }
+
+    @Override
+    public String toPrettyString() {
+        return "" + value;
     }
 
     private byte[] calcByteArray(long value) {

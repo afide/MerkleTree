@@ -31,6 +31,11 @@ public interface IByteable {
     public byte[] toByteArray();
 
     /**
+     * @return a pretty string representation of this type
+     */
+    public String toPrettyString();
+
+    /**
      * Comparator-function for byteable, see {@link Comparable}
      * @param other
      * @return &lt;0 if smaller, 0 if equal, &gt;0 if greater

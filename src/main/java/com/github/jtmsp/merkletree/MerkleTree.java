@@ -67,7 +67,7 @@ public class MerkleTree<K extends IByteable> implements IMerkleTree<K> {
     }
 
     @Override
-    public RemoveResult remove(K key) {
+    public RemoveResult<K> remove(K key) {
         if (rootNode == null) {
             return null;
         }
