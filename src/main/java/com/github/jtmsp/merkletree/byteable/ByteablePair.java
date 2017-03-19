@@ -27,9 +27,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.AbstractMap.SimpleEntry;
 
 /**
- * A Byteable that holds a name/value pair
- *
- * @author wolfposd
+ * A Byteable that holds a name/value pair.
+ * @author tglaeser
  */
 public class ByteablePair implements IByteable {
 
@@ -53,7 +52,7 @@ public class ByteablePair implements IByteable {
     }
 
     private SimpleEntry<String, String> getPair(String s) {
-        String[] parts = s.split("=");
+        String[] parts = s.split("=", 2);
         if (parts.length == 2) {
             return new SimpleEntry<>(parts[0], parts[1]);
         } else {
