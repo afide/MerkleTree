@@ -1,0 +1,5 @@
+description = "The $project.name module"
+
+dependencies {
+    compile project.capraia.modules.bouncycastle
+}
