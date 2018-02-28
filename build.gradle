@@ -1,5 +1,5 @@
 description = "The $project.name module"
 
 dependencies {
-    compile project.capraia.modules.bouncycastle
+    compile project(":modules:$project.rootProject.name-crypto")
 }
