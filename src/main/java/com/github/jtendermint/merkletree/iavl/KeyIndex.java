@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,17 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree;
+package com.github.jtendermint.merkletree.iavl;
 
-import java.util.Arrays;
+public class KeyIndex<K> {
 
-public class HashWithCount {
+    private final K value;
+    private final boolean exists;
+    private final int index;
 
-    public final int count;
-    public final byte[] hash;
-
-    public HashWithCount(byte[] hash, int count) {
-        this.hash = hash == null ? null : Arrays.copyOf(hash, hash.length);
-        this.count = count;
+    public KeyIndex(K value, boolean exists, int index) {
+        this.value = value;
+        this.exists = exists;
+        this.index = index;
     }
+
+    public K getValue() {
+        return value;
+    }
+
+    public boolean doesExist() {
+        return exists;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
 }

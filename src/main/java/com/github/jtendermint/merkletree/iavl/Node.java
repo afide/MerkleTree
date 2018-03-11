@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree;
+package com.github.jtendermint.merkletree.iavl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 
-import com.github.jtmsp.merkletree.byteable.IByteable;
-import com.github.jtmsp.merkletree.crypto.ByteUtil;
-import com.github.jtmsp.merkletree.crypto.RipeMD160;
+import com.github.jtendermint.merkletree.iavl.IterateFunct.Loop;
+import com.github.jtendermint.merkletree.HashWithCount;
 
-public class MerkleNode<K extends IByteable> {
+public class Node<K extends Comparable<K>> {
 
-    private K key;
+    private K value;
     private int height;
     private int size;
 
@@ -43,19 +41,20 @@ public class MerkleNode<K extends IByteable> {
     private byte[] leftChildHash;
     private byte[] rightChildHash;
 
-    private MerkleNode<K> leftChildNode;
-    private MerkleNode<K> rightChildNode;
+    private Node<K> leftChildNode;
+    private Node<K> rightChildNode;
 
-    public MerkleNode(K key) {
-        this(key, 0, 1, null, null, null, null);
+    private Hashing<K> hashFunction;
+
+    public Node<K> init(K value) {
+        return init(value, 0, 1, null, null, null, null);
+    }
+    public Node<K> init(K key, Node<K> leftNode, Node<K> rightNode) {
+        return init(key, 1, 2, null, leftNode, null, rightNode);
     }
 
-    public MerkleNode(K key, MerkleNode<K> leftNode, MerkleNode<K> rightNode) {
-        this(key, 1, 2, null, leftNode, null, rightNode);
-    }
-
-    private MerkleNode(K key, int height, int size, byte[] leftHash, MerkleNode<K> leftNode, byte[] rightHash, MerkleNode<K> rightNode) {
-        this.key = key;
+    public Node<K> init(K value, int height, int size, byte[] leftHash, Node<K> leftNode, byte[] rightHash, Node<K> rightNode) {
+        this.value = value;
         this.height = height;
         this.size = size;
         this.hash = null;
@@ -63,28 +62,48 @@ public class MerkleNode<K extends IByteable> {
         this.leftChildNode = leftNode;
         this.rightChildHash = rightHash == null ? null : Arrays.copyOf(rightHash, rightHash.length);
         this.rightChildNode = rightNode;
+        return this;
     }
 
-    public K getKey() {
-        return key;
+    public K getValue() {
+        return value;
     }
 
-    public int getSize() {
-        return size;
+    public Node<K> setHashFunction(Hashing<K> hash) {
+        this.hashFunction = hash;
+        return this;
     }
 
     public int getHeight() {
         return height;
     }
 
-    public boolean contains(K entry) {
-        return get(entry) != null;
+    public int getSize() {
+        return size;
+    }
+
+    public boolean contains(K value) {
+        return get(value) != null;
+    }
+
+    public K get(K entry) {
+        if (entry != null && entry.equals(value)) {
+            return value;
+        } else if (this.height == 0) {
+            return null;
+        } else {
+            if (entry.compareTo(value) < 0) {
+                return this.leftChildNode.get(entry);
+            } else {
+                return this.rightChildNode.get(entry);
+            }
+        }
     }
 
     public KeyIndex<K> get(int index) {
         if (this.height == 0) {
             if (index == 0) {
-                return new KeyIndex<K>(key, true, 0);
+                return new KeyIndex<K>(value, true, 0);
             } else {
                 throw new RuntimeException("Asked for index > 0 with a height of 0");
             }
@@ -97,41 +116,29 @@ public class MerkleNode<K extends IByteable> {
         }
     }
 
-    public K get(K entry) {
-        if (entry != null && entry.equals(key))
-            return key;
-        else if (this.height == 0)
-            return null;
-        else {
-            if (entry.compareTo(key) < 0) {
-                return this.leftChildNode.get(entry);
-            } else {
-                return this.rightChildNode.get(entry);
-            }
-        }
-    }
-
-    public AddResult<K> add(K entry) {
-        int compareResult = entry.compareTo(this.key);
+    public AddResult<K> add(K value) {
+        int compareResult = value.compareTo(this.value);
         if (height == 0) {
             if (compareResult < 0) {
-                MerkleNode<K> newNode = new MerkleNode<>(this.key, new MerkleNode<K>(entry), this);
+                Node<K> newNode = new Node<>();
+                newNode.init(this.value, this.newNode().init(value).setHashFunction(hashFunction), this).setHashFunction(hashFunction);
                 return new AddResult<K>(newNode, false);
             } else if (compareResult == 0) {
-                return new AddResult<K>(new MerkleNode<>(entry), true);
+                return new AddResult<K>(this.newNode().init(value).setHashFunction(hashFunction), true);
             } else {
-                MerkleNode<K> newNode = new MerkleNode<>(entry, this, new MerkleNode<>(entry));
+                Node<K> newNode = new Node<>();
+                newNode.init(value, this, this.newNode().init(value).setHashFunction(hashFunction)).setHashFunction(hashFunction);
                 return new AddResult<K>(newNode, false);
             }
         } else {
-            MerkleNode<K> newNode = this.createCopy();
+            Node<K> newNode = this.createCopy();
             AddResult<K> newNodeResult;
-            if (entry.compareTo(newNode.key) < 0) {
-                newNodeResult = newNode.leftChildNode.add(entry);
-                newNode.leftChildNode = newNodeResult.getNode(); //newNodeResult.getNode();
+            if (value.compareTo(newNode.value) < 0) {
+                newNodeResult = newNode.leftChildNode.add(value);
+                newNode.leftChildNode = newNodeResult.getNode(); // newNodeResult.getNode();
                 newNode.leftChildHash = null;
             } else {
-                newNodeResult = newNode.rightChildNode.add(entry);
+                newNodeResult = newNode.rightChildNode.add(value);
                 newNode.rightChildNode = newNodeResult.getNode();
                 newNode.rightChildHash = null;
             }
@@ -144,8 +151,11 @@ public class MerkleNode<K extends IByteable> {
             }
         }
     }
+    public boolean remove(K entry) {
+        return false;
+    }
 
-    private MerkleNode<K> balance() {
+    private Node<K> balance() {
         int balance = this.getBalance();
         if (balance > 1) {
             if (this.leftChildNode.getBalance() >= 0) {
@@ -153,7 +163,7 @@ public class MerkleNode<K extends IByteable> {
                 return this.rotateRight();
             } else {
                 // Left Right Case
-                MerkleNode<K> newNode = this.createCopy();
+                Node<K> newNode = this.createCopy();
                 newNode.leftChildHash = null;
                 newNode.leftChildNode = newNode.leftChildNode.rotateLeft();
                 return newNode.rotateRight();
@@ -165,7 +175,7 @@ public class MerkleNode<K extends IByteable> {
                 return this.rotateLeft();
             } else {
                 // Right Left Case
-                MerkleNode<K> newNode = this.createCopy();
+                Node<K> newNode = this.createCopy();
                 newNode.rightChildHash = null;
                 newNode.rightChildNode = newNode.rightChildNode.rotateRight();
                 return newNode.rotateLeft();
@@ -175,13 +185,12 @@ public class MerkleNode<K extends IByteable> {
         return this;
     }
 
-    private MerkleNode<K> rotateLeft() {
-        MerkleNode<K> newNode = this.createCopy();
-        MerkleNode<K> rightCopy = newNode.rightChildNode.createCopy();
+    private Node<K> rotateLeft() {
+        Node<K> newNode = this.createCopy();
+        Node<K> rightCopy = newNode.rightChildNode.createCopy();
 
         newNode.rightChildHash = rightCopy.leftChildHash;
         newNode.rightChildNode = rightCopy.leftChildNode;
-        rightCopy.leftChildNode = null;
         rightCopy.leftChildNode = newNode;
 
         newNode.updateHeightAndSize();
@@ -189,9 +198,9 @@ public class MerkleNode<K extends IByteable> {
         return rightCopy;
     }
 
-    private MerkleNode<K> rotateRight() {
-        MerkleNode<K> newNode = this.createCopy();
-        MerkleNode<K> leftCopy = newNode.leftChildNode.createCopy();
+    private Node<K> rotateRight() {
+        Node<K> newNode = this.createCopy();
+        Node<K> leftCopy = newNode.leftChildNode.createCopy();
 
         newNode.leftChildHash = leftCopy.rightChildHash;
         newNode.leftChildNode = leftCopy.rightChildNode;
@@ -212,80 +221,19 @@ public class MerkleNode<K extends IByteable> {
         this.size = leftChildNode.getSize() + rightChildNode.getSize();
     }
 
-    public boolean remove(K entry) {
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    public HashWithCount getHashWithCount() {
-        //LOG.debug("Starting hashWithCount at height={}", height);
-        if (this.hash != null) {
-            //LOG.debug("Node already had a hash. Returning 0-hashcount");
-            return new HashWithCount(this.hash, 0);
-        }
-        try (ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream()) {
-            int hashCount = this.writeHashBytes(byteOutStream);
-            //LOG.debug("Done hashWithCount at height: {} with hashcount={}", this.height, hashCount);
-            this.hash = RipeMD160.hash(byteOutStream.toByteArray());
-            return new HashWithCount(this.hash, hashCount + 1);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private int writeHashBytes(ByteArrayOutputStream bos) throws IOException {
-        int hashCount = 0;
-        // TODO overflow / negative ?
-        bos.write((byte) this.height);
-        ByteUtil.writeWithVarint(BigInteger.valueOf(size).toByteArray(), bos);
-
-        // TODO what does the following mean?
-
-        if (this.height == 0) {
-            ByteUtil.writeWithVarint(this.key.toByteArray(), bos);
-        } else {
-            if (this.leftChildNode != null) {
-                HashWithCount leftHashCount = this.leftChildNode.getHashWithCount();
-                this.leftChildHash = Objects.requireNonNull(leftHashCount.hash, "this.leftHash was null in writeHashBytes");
-                hashCount += leftHashCount.count;
-            }
-            ByteUtil.writeWithVarint(this.leftChildHash, bos);
-            if (this.rightChildNode != null) {
-                HashWithCount rightHashCount = this.rightChildNode.getHashWithCount();
-                this.rightChildHash = Objects.requireNonNull(rightHashCount.hash, "this.rightHash was null in writeHashBytes");
-                hashCount += rightHashCount.count;
-            }
-            ByteUtil.writeWithVarint(this.rightChildHash, bos);
-
-        }
-        return hashCount;
-    }
-
-    public byte[] save() {
-
-        if (hash == null)
-            hash = getHashWithCount().hash;
-
-        if (leftChildNode != null)
-            leftChildHash = leftChildNode.save();
-        if (rightChildNode != null)
-            rightChildHash = rightChildNode.save();
-
-        return hash;
-    }
-
-    public MerkleNode<K> createCopy() {
+    public Node<K> createCopy() {
         if (this.height == 0) {
             throw new RuntimeException("Cannot copy Value-Nodes");
         } else {
-            return new MerkleNode<K>(key, this.height, this.size, this.leftChildHash, this.leftChildNode, this.rightChildHash,
-                    this.rightChildNode);
+            return newNode().init(value, this.height, this.size, this.leftChildHash, this.leftChildNode, this.rightChildHash,
+                    this.rightChildNode).setHashFunction(hashFunction);
         }
     }
 
     public String toPrettyString() {
-        if (this.height == 0)
-            return "" + key.toPrettyString();
-        else {
+        if (this.height == 0) {
+            return String.valueOf(value);
+        } else {
             return "(" + this.leftChildNode.toPrettyString() + " " + this.rightChildNode.toPrettyString() + ")";
         }
     }
@@ -294,22 +242,81 @@ public class MerkleNode<K extends IByteable> {
         return height == 0;
     }
 
-    public boolean iterateNodes(IterateFunction<K> func) {
-        boolean stop = func.currentNode(this);
-        if (stop) {
-            return true;
+    public Loop iterateNodes(IterateFunct<K> func) {
+        Loop stop = func.currentNode(this);
+        if (stop == Loop.STOP) {
+            return stop;
         }
         if (this.height > 0) {
             stop = this.leftChildNode.iterateNodes(func);
-            if (stop) {
-                return true;
+            if (stop == Loop.STOP) {
+                return Loop.STOP;
             }
             stop = this.rightChildNode.iterateNodes(func);
-            if (stop) {
-                return true;
+            if (stop == Loop.STOP) {
+                return Loop.STOP;
             }
         }
-        return false;
+        return Loop.CONTINUE;
+    }
+
+    protected Node<K> newNode() {
+        return new Node<K>();
+    }
+
+    public HashWithCount getHashWithCount() {
+        if (this.hash != null) {
+            return new HashWithCount(this.hash, 0);
+        }
+        try (ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream()) {
+            int hashCount = this.writeHashBytes(byteOutStream);
+            this.hash = hashFunction.hashBytes(byteOutStream.toByteArray());
+            return new HashWithCount(this.hash, hashCount + 1);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private int writeHashBytes(ByteArrayOutputStream bos) throws IOException {
+        int hashCount = 0;
+        // ByteUtil.writeWithVarint(BigInteger.valueOf(size).toByteArray(),
+        // bos);
+        if (this.height == 0) {
+            byte[] hashBytes = hashFunction.hashBytes(this.value);
+            bos.write(hashBytes);
+        } else {
+            if (this.leftChildNode != null) {
+                HashWithCount leftHashCount = this.leftChildNode.getHashWithCount();
+                this.leftChildHash = Objects.requireNonNull(leftHashCount.hash, "this.leftHash was null in writeHashBytes");
+                hashCount += leftHashCount.count;
+            }
+            if (this.rightChildNode != null) {
+                HashWithCount rightHashCount = this.rightChildNode.getHashWithCount();
+                this.rightChildHash = Objects.requireNonNull(rightHashCount.hash, "this.rightHash was null in writeHashBytes");
+                hashCount += rightHashCount.count;
+            }
+            byte[] hashBytesRight = hashFunction.hashBytes(this.rightChildHash);
+            byte[] hashBytesLeft = hashFunction.hashBytes(this.leftChildHash);
+            bos.write(hashBytesLeft);
+            bos.write(hashBytesRight);
+
+        }
+        return hashCount;
+    }
+
+    public byte[] save() {
+        if (hash == null) {
+            hash = getHashWithCount().hash;
+        }
+
+        if (leftChildNode != null) {
+            leftChildHash = leftChildNode.save();
+        }
+        if (rightChildNode != null) {
+            rightChildHash = rightChildNode.save();
+        }
+
+        return Arrays.copyOf(hash, hash.length);
     }
 
 }

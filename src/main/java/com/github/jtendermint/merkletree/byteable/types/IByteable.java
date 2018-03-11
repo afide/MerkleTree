@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,24 +21,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree;
+package com.github.jtendermint.merkletree.byteable.types;
 
-import com.github.jtmsp.merkletree.byteable.IByteable;
-
-/**
- * Iteration Function for MerkleTrees
- * 
- * @author wolfposd
- */
-@FunctionalInterface
-public interface IterateFunction<K extends IByteable> {
+public interface IByteable {
 
     /**
-     * Iterate over nodes of this Tree, passes both types of nodes.<br>
-     * Check with node.isLeafNode() if its an actual data node 
-     * 
-     * @param node the current Node
-     * @return <code>true</code> continues to iterate, <code>false</code> stops iterating
+     * @return byte-array representation of this type
      */
-    public boolean currentNode(MerkleNode<K> node);
+    byte[] toByteArray();
+
+    /**
+     * @return a pretty string representation of this type
+     */
+    public String toPrettyString();
+
+    /**
+     * Comparator-function for byteable, see {@link Comparable}
+     * @param other
+     * @return &lt;0 if smaller, 0 if equal, &gt;0 if greater
+     */
+    int compareTo(IByteable other);
+
 }

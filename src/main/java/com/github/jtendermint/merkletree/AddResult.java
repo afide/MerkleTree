@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,46 +21,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree;
+package com.github.jtendermint.merkletree;
 
-import com.github.jtmsp.merkletree.byteable.IByteable;
+import com.github.jtendermint.merkletree.byteable.types.IByteable;
 
-/**
- * 
- * @author wolfposd
- */
-public class RemoveResult<K extends IByteable> {
-    private MerkleNode<K> node;
-    private byte[] hash;
-    private IByteable byteable;
-    private boolean removed;
+public class AddResult<K extends IByteable> {
+    private final MerkleNode<K> node;
+    private final boolean updated;
 
-    public RemoveResult(byte[] hash, MerkleNode<K> node, K byteable, boolean removed) {
-        this.hash = hash;
+    public AddResult(MerkleNode<K> node, boolean updated) {
         this.node = node;
-        this.byteable = byteable;
-        this.removed = removed;
+        this.updated = updated;
     }
 
-    public RemoveResult(K byteable, boolean removed) {
-        this.byteable = byteable == null ? null : byteable;
-        this.removed = removed;
+    public boolean wasUpdated() {
+        return updated;
     }
 
     public MerkleNode<K> getNode() {
         return node;
     }
-
-    public byte[] getHash() {
-        return hash;
-    }
-
-    public boolean wasRemoved() {
-        return removed;
-    }
-
-    public IByteable getByteable() {
-        return byteable;
-    }
-
 }

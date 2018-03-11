@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,24 +21,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree;
+package com.github.jtendermint.merkletree.iavl;
 
-import com.github.jtmsp.merkletree.byteable.IByteable;
+import java.util.Arrays;
 
-public class AddResult<K extends IByteable> {
-    private final MerkleNode<K> node;
-    private final boolean wasUpdated;
+public class RmResult<K extends Comparable<K>> {
 
-    public AddResult(MerkleNode<K> node, boolean wasUpdate) {
+    private final Node<K> node;
+    private final byte[] hash;
+    private final K value;
+    private final boolean removed;
+
+    public RmResult(byte[] hash, Node<K> node, K value, boolean removed) {
+        this.hash = Arrays.copyOf(hash, hash.length);
         this.node = node;
-        this.wasUpdated = wasUpdate;
+        this.value = value;
+        this.removed = removed;
     }
 
-    public boolean wasUpdated() {
-        return wasUpdated;
-    }
-
-    public MerkleNode<K> getNode() {
+    public Node<K> getNode() {
         return node;
     }
+
+    public byte[] getHash() {
+        return hash != null ? Arrays.copyOf(hash, hash.length) : null;
+    }
+
+    public K getValue() {
+        return value;
+    }
+
+    public boolean isRemoved() {
+        return removed;
+    }
+
 }

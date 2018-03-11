@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree.byteable;
+package com.github.jtendermint.merkletree.byteable.types;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.util.Objects;
 
 /**
  * A Byteable that holds a String
@@ -42,13 +44,13 @@ public class ByteableString implements IByteable {
         try {
             string = new String(bytes, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            throw new RuntimeException("UTF-8 conversion failed.", e);
         }
     }
 
     @Override
     public byte[] toByteArray() {
-        return string.getBytes();
+        return string.getBytes(Charset.forName("UTF-8"));
     }
 
     @Override
@@ -58,9 +60,33 @@ public class ByteableString implements IByteable {
 
     @Override
     public int compareTo(IByteable other) {
-        if (other instanceof ByteableString)
+        if (other instanceof ByteableString) {
             return string.compareTo(((ByteableString) other).string);
+        }
         return -1;
+    }
+    
+    @Override
+    public String toString() {
+        return string;
+    }
+    
+    @Override
+    public int hashCode() {
+        if (string == null) {
+            return 0;
+        } else {
+            return string.hashCode();
+        }
+    }
+    
+    @Override
+    public boolean equals(Object arg0) {
+        if (arg0 instanceof ByteableString) {
+            ByteableString other = (ByteableString) arg0;
+            return Objects.equals(this.string, other.string);
+        }
+        return false;
     }
 
 }

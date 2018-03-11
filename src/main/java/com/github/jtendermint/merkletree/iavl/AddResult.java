@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,25 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree.byteable;
+package com.github.jtendermint.merkletree.iavl;
 
-public interface IByteable {
+public class AddResult<K extends Comparable<K>> {
+    private final Node<K> node;
+    private final boolean updated;
 
-    /**
-     * @return byte-array representation of this type
-     */
-    public byte[] toByteArray();
+    public AddResult(Node<K> node, boolean updated) {
+        this.node = node;
+        this.updated = updated;
+    }
 
-    /**
-     * @return a pretty string representation of this type
-     */
-    public String toPrettyString();
+    public boolean wasUpdated() {
+        return updated;
+    }
 
-    /**
-     * Comparator-function for byteable, see {@link Comparable}
-     * @param other
-     * @return &lt;0 if smaller, 0 if equal, &gt;0 if greater
-     */
-    public int compareTo(IByteable other);
-
+    public Node<K> getNode() {
+        return node;
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree;
+package com.github.jtendermint.merkletree;
 
-import com.github.jtmsp.merkletree.byteable.IByteable;
+import com.github.jtendermint.merkletree.byteable.types.IByteable;
+
+import java.util.Arrays;
 
 public class MerkleTree<K extends IByteable> implements IMerkleTree<K> {
 
@@ -57,7 +59,7 @@ public class MerkleTree<K extends IByteable> implements IMerkleTree<K> {
     @Override
     public boolean add(K entry) {
         if (rootNode == null) {
-            rootNode = new MerkleNode<K>(entry);
+            rootNode = createNode(entry);
             return false;
         } else {
             AddResult<K> result = rootNode.add(entry);
@@ -81,14 +83,20 @@ public class MerkleTree<K extends IByteable> implements IMerkleTree<K> {
     @Override
     public HashWithCount getHashWithCount() {
         HashWithCount result = new HashWithCount(null, 0);
-        if (rootNode != null)
+        if (rootNode != null) {
             result = rootNode.getHashWithCount();
+        }
         return result;
     }
 
     @Override
     public byte[] getRootHash() {
-        return rootNode == null ? null : rootNode.getHashWithCount().hash;
+        if (rootNode == null) {
+            return null;
+        } else {
+            byte[] rootHash = rootNode.getHashWithCount().hash;
+            return rootHash != null ? Arrays.copyOf(rootHash, rootHash.length) : null;
+        }
     }
 
     @Override
@@ -98,8 +106,9 @@ public class MerkleTree<K extends IByteable> implements IMerkleTree<K> {
 
     @Override
     public String toPrettyString() {
-        if (rootNode == null)
+        if (rootNode == null) {
             return "()";
+        }
         return rootNode.toPrettyString();
     }
 
@@ -109,6 +118,10 @@ public class MerkleTree<K extends IByteable> implements IMerkleTree<K> {
             return rootNode.iterateNodes(function);
         }
         return false;
+    }
+    
+    protected MerkleNode<K> createNode(K entry) {
+       return new MerkleNode<K>(entry);
     }
 
 }

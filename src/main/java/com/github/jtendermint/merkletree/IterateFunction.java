@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,49 +21,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree.crypto;
+package com.github.jtendermint.merkletree;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-import java.util.Base64;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import com.github.jtmsp.merkletree.crypto.ByteUtil.ByteFormat;
+import com.github.jtendermint.merkletree.byteable.types.IByteable;
 
 /**
- * BouncyCastle RipeMD160
- *
+ * Iteration Function for MerkleTrees
+ * 
  * @author wolfposd
  */
-public class RipeMD160 {
+@FunctionalInterface
+public interface IterateFunction<K extends IByteable> {
 
-    static {
-        Security.addProvider(new BouncyCastleProvider());
-    }
-
-    private RipeMD160() {
-        // only static usage
-    }
-
-    public static byte[] hash(byte[] bytesToHash) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("RIPEMD160");
-            return md.digest(bytesToHash);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static String hashToBase64(byte[] bytesToHash) {
-        byte[] hashed = hash(bytesToHash);
-        return Base64.getEncoder().encodeToString(hashed);
-    }
-
-    public static String hashToStringBytes(byte[] bytesToHash) {
-        return ByteUtil.toString(hash(bytesToHash), ByteFormat.FORMAT_00);
-    }
-
+    /**
+     * Iterate over nodes of this Tree, passes both types of nodes.<br>
+     * Check with node.isLeafNode() if its an actual data node 
+     * 
+     * @param node the current Node
+     * @return <code>true</code> stops iteration, <code>false</code> continues iteration
+     */
+    boolean currentNode(MerkleNode<K> node);
 }

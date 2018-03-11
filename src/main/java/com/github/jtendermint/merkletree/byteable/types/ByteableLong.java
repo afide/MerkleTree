@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2016 
+ * Copyright (c) 2016 - 2018 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.jtmsp.merkletree.byteable;
+package com.github.jtendermint.merkletree.byteable.types;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -45,7 +45,7 @@ public class ByteableLong implements IByteable {
 
     @Override
     public byte[] toByteArray() {
-        return bytes;
+        return bytes != null ? Arrays.copyOf(bytes, bytes.length) : null;
     }
 
     @Override
@@ -67,8 +67,9 @@ public class ByteableLong implements IByteable {
 
     @Override
     public int compareTo(IByteable other) {
-        if (other instanceof ByteableLong)
+        if (other instanceof ByteableLong) {
             return Long.compare(this.value, ((ByteableLong) other).value);
+        }
         return -1;
     }
 
@@ -82,7 +83,12 @@ public class ByteableLong implements IByteable {
 
     @Override
     public String toString() {
-        return "" + value;
+        return String.valueOf(value);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Long.hashCode(value);
     }
 
 }
